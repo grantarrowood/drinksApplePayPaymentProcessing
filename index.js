@@ -1,21 +1,23 @@
 exports.handler = function(event, context, callback) {   
-   // Use callback() and return information to the caller.
-  var braintree = require("braintree");
-    var gateway = braintree.connect({
-	    environment: braintree.Environment.Sandbox,
-	    merchantId: "2csz6t375q758m9x",
-	    publicKey: "mpk8yfp847fnb4b2",
-	    privateKey: "95393d62ea817ad98c85771b210500e4"
-    }); 
-  var nonceFromTheClient = event.nonce;
-  gateway.transaction.sale({
-  	amount: event.amount,
-  	paymentMethodNonce: nonceFromTheClient,
-  	options: {
-    		submitForSettlement: true
-  		}
-	}, function (err, result) {
-	    callback(null, result)
-	    context.done()
-	});
+  var stripe = require("stripe")("sk_test_qCqgy1i7lugfoaD1ghoJzcqc");
+
+  // Token is created using Stripe.js or Checkout!
+  // Get the payment token submitted by the form:
+  var token = event.token; // Using Express
+  var totalAmount = parseInt(event.amount);
+// Charge the user's card:
+  var charge = stripe.charges.create({
+    amount: totalAmount,
+    currency: "usd",
+    description: "Test Charge",
+    source: token,
+    destination: {
+    amount: totalAmount-600,
+    account: event.driverStripeId,
+  },
+  }, function(err, charge) {
+    callback(err, charge);
+    context.done();
+  });
+  
 }
